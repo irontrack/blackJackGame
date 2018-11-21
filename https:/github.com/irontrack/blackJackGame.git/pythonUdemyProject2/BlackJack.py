@@ -4,11 +4,11 @@ class Card():
     def __init__(self,card):
         self.card = card
         self.value = 0
-        if card[0] == 'A':
-            self.value == 11
-        elif card[0] == 'K' or card[0] =='Q' or card[0] == 'J':
-            self.value == 10
-        elif card[0] == '1':
+        if self.card[0] == 'A':
+            self.value = 11
+        elif self.card[0] == 'K' or self.card[0] =='Q' or self.card[0] == 'J':
+            self.value = 10
+        elif self.card[0] == '1':
             self.value = 10
         else:
             self.value = int(card[0])
@@ -63,6 +63,10 @@ class Player():
         return self.bank
     def mod_bank(self,value):
         self.bank = self.bank + value
+    def win(self,pot):
+        self.mod_bank(pot)
+    def loss(self,pot):
+        self.mod_bank(-pot)
     
 class Game():
     def __init__(self):
@@ -73,7 +77,8 @@ class Game():
         self.pot = 0
         self.keep_playing = True
         self.dealerHide = True
-        pass
+        self.player_win_message = 'CONGRATULATIONS: you''ve won!'
+        self.dealer_win_message = 'BAD LUCK: dealer wins!'
     def deal(self):
         self.player1.draw_card(self.deck.d_card())
         self.dealer.draw_card(self.deck.d_card())
@@ -100,6 +105,16 @@ class Game():
             return sum(hand) == 21 or self.blackJack(temp)
         except:
             return sum(hand) == 21
+    def maxHand(self,hand):
+        temp = hand[:]
+        value = sum(hand)
+        if value < 21:
+            return value
+        else:
+            temp.remove(11)
+            temp.append(1)
+            return self.maxHand(temp)
+        
     def round(self):
         
         while True:
@@ -116,21 +131,60 @@ class Game():
         self.pot += bet
         self.player1.mod_bank(-bet)
         self.deal()
-        while True:
-            decision = input('would you like to hit or stay: y/n? ')
+        pTurn = True
+        dTurn = True
+        while pTurn:
+            self.print_screen()
+            decision = input('would you like to hit: y/n? ')
             if decision == 'y':
-                self.player1.draw_card()
-            values = []  
-            for cards in self.player1.hand:
-                values.append(cards.value())
+                self.player1.draw_card(self.deck.d_card())
+                values = []  
+                for cards in self.player1.hand:
+                    values.append(cards.card_value())
+                
             
+                if self.bust(values):
+                    self.player1.loss(self.pot)
+                    self.print_screen()
+                    self.pot = 0
+                    print(self.dealer_win_message)
+                    pTurn = False
+                    dTurn = False
+                elif self.blackJack(values):
+                    self.player1.win(3*self.pot)
+                    self.pot = 0
+                    self.print_screen()
+                    print(self.player_win_message)
+                    pTurn = False
+                    dTurn = False
+            else:
+                pTurn = False
+        while dTurn:
+            self.dealerHide = False
+            self.print_screen()
+            dValues = []
+            pValues = []
+            for cards in self.dealer.hand:
+                dValues.append(cards.card_value())
+            for cards in self.player1.hand:
+                pValues.append(cards.card_value())
+            if self.bust(dValues):
+                self.player1.win(self.pot)
+                self.print_screen()
+                print(self.player_win_message)
+                dTurn = False
+            elif self.maxHand(dValues) <= self.maxHand(pValues):
+                self.dealer.draw_card(self.deck.d_card())
+                self.print_screen()
+            
+            else:
+                self.player1.loss(-self.pot)
+                self.print_screen()
+                print(self.dealer_win_message)
+                dTurn = False
+                
+                    
         
-            if self.bust(values):
-                break
-                pass
-            elif self.blackJack(values):
-                break
-                pass
         
     
     def play(self):
@@ -143,9 +197,11 @@ class Game():
                 break
         self.player1.mod_bank(initialBank)
         playAgain = True
-        self.print_screen()
-        self.round()
-        self.print_screen()
+        while playAgain:
+            self.print_screen()
+            self.round()
+            playAgain = input('would you like to play again: y/n?') == 'y'
+            
         #while playAgain:
             
     def print_screen(self):
@@ -171,7 +227,6 @@ class Game():
         
 if __name__ == '__main__':
     game = Game()
-    print(game.bust([11,10,5,8]))
-  
+    game.play()
 
     
