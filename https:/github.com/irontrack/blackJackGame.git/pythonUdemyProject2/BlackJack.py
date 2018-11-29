@@ -43,7 +43,12 @@ class Deck():
                 index += 1
         self.order = list(range(1,53))
         random.shuffle(self.order)
+    def new_deck(self):
+        self.order = list(range(1,53))
+        random.shuffle(self.order)
     def d_card(self):
+        if len(self.order) < 1:
+            self.new_deck()
         return self.cards[str(self.order.pop())]
     def show(self):
         for x in range(0,52):
@@ -75,7 +80,6 @@ class Game():
         self.dealer = Player()
         self.deck = Deck()
         self.pot = 0
-        self.keep_playing = True
         self.dealerHide = True
         self.player_win_message = 'CONGRATULATIONS: you''ve won!'
         self.dealer_win_message = 'BAD LUCK: dealer wins!'
@@ -117,6 +121,10 @@ class Game():
         
     def round(self):
         
+        self.dealerHide = True
+        self.player1.hand = []
+        self.dealer.hand = []
+        self.print_screen()
         while True:
             try:
                 bet = int(input('Place initial wager: '))
@@ -131,6 +139,7 @@ class Game():
         self.pot += bet
         self.player1.mod_bank(-bet)
         self.deal()
+        self.print_screen()
         pTurn = True
         dTurn = True
         while pTurn:
@@ -169,8 +178,9 @@ class Game():
             for cards in self.player1.hand:
                 pValues.append(cards.card_value())
             if self.bust(dValues):
-                self.player1.win(self.pot)
+                self.player1.win(2*self.pot)
                 self.print_screen()
+                self.pot = 0
                 print(self.player_win_message)
                 dTurn = False
             elif self.maxHand(dValues) <= self.maxHand(pValues):
@@ -180,6 +190,7 @@ class Game():
             else:
                 self.player1.loss(-self.pot)
                 self.print_screen()
+                self.pot = 0
                 print(self.dealer_win_message)
                 dTurn = False
                 
@@ -198,7 +209,6 @@ class Game():
         self.player1.mod_bank(initialBank)
         playAgain = True
         while playAgain:
-            self.print_screen()
             self.round()
             playAgain = input('would you like to play again: y/n?') == 'y'
             
@@ -228,5 +238,6 @@ class Game():
 if __name__ == '__main__':
     game = Game()
     game.play()
+
 
     
