@@ -137,29 +137,40 @@ class Game():
             else:
                 break
         self.pot += bet
-        self.player1.mod_bank(-bet)
         self.deal()
         self.print_screen()
+        dValues = []
+        pValues = []
+        for cards in self.dealer.hand:
+            dValues.append(cards.card_value())
+        for cards in self.player1.hand:
+            pValues.append(cards.card_value())
         pTurn = True
         dTurn = True
         while pTurn:
             self.print_screen()
             decision = input('would you like to hit: y/n? ')
+            if self.blackJack(pValues):
+                pTurn = False
+                dTurn = False
+                self.player1.win(3*self.pot)
+                self.pot = 0
+                self.print_screen()
+                print(self.player_win_message)
+                break
             if decision == 'y':
                 self.player1.draw_card(self.deck.d_card())
-                values = []  
-                for cards in self.player1.hand:
-                    values.append(cards.card_value())
+                pValues.append(self.player1.hand[len(pValues)].card_value())
                 
             
-                if self.bust(values):
+                if self.bust(pValues):
                     self.player1.loss(self.pot)
                     self.print_screen()
                     self.pot = 0
                     print(self.dealer_win_message)
                     pTurn = False
                     dTurn = False
-                elif self.blackJack(values):
+                elif self.blackJack(pValues):
                     self.player1.win(3*self.pot)
                     self.pot = 0
                     self.print_screen()
@@ -171,14 +182,10 @@ class Game():
         while dTurn:
             self.dealerHide = False
             self.print_screen()
-            dValues = []
-            pValues = []
-            for cards in self.dealer.hand:
-                dValues.append(cards.card_value())
-            for cards in self.player1.hand:
-                pValues.append(cards.card_value())
+            
+            
             if self.bust(dValues):
-                self.player1.win(2*self.pot)
+                self.player1.win(self.pot)
                 self.print_screen()
                 self.pot = 0
                 print(self.player_win_message)
@@ -186,9 +193,16 @@ class Game():
             elif self.maxHand(dValues) <= self.maxHand(pValues):
                 self.dealer.draw_card(self.deck.d_card())
                 self.print_screen()
+                dValues.append(self.dealer.hand[len(dValues)].card_value())
+                if self.bust(dValues):
+                    self.player1.win(self.pot)
+                    self.print_screen()
+                    self.pot = 0
+                    print(self.player_win_message)
+                    dTurn = False
             
             else:
-                self.player1.loss(-self.pot)
+                self.player1.loss(self.pot)
                 self.print_screen()
                 self.pot = 0
                 print(self.dealer_win_message)
